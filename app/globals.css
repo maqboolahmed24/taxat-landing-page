@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------
+   Design tokens (HSL)
+   - Tailwind consumes these via hsl(var(--token) / <alpha>)
+   - Keep tokens semantic, not raw hex.
+---------------------------- */
+:root {
+  --bg: 222 47% 4%;
+  --surface: 222 45% 7%;
+  --surface-2: 222 40% 10%;
+  --border: 220 22% 20%;
+  --text: 210 40% 98%;
+  --muted: 215 18% 72%;
+
+  /* Brand accents */
+  --accent: 190 100% 55%;     /* electric cyan */
+  --accent-2: 262 100% 72%;   /* spectral violet */
+
+  /* Status */
+  --success: 145 70% 45%;
+  --warn: 38 95% 55%;
+  --danger: 0 85% 58%;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: hsl(var(--text));
+  background-color: hsl(var(--bg));
+}
+
+::selection {
+  background: hsl(var(--accent) / 0.28);
+  color: hsl(var(--text));
+}
+
+/* Better tap UX */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Subtle noise overlay helper */
+.noise {
+  position: relative;
+}
+.noise::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image: url("/noise.png");
+  mix-blend-mode: overlay;
+}
+
+/* Premium "hairline" separator that doesn't look harsh on dark */
+.hairline {
+  background: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--border) / 0.65),
+    transparent
+  );
+}
+
+/* Glass surface utility (better than raw backdrop-blur everywhere) */
+.glass {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--surface) / 0.75),
+    hsl(var(--surface) / 0.35)
+  );
+  border: 1px solid hsl(var(--border) / 0.6);
+  backdrop-filter: blur(14px);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px hsl(var(--bg)),
+    0 0 0 4px hsl(var(--accent) / 0.55);
+  border-radius: 10px;
+}
+
+/* Reduce motion: keep experience elegant without movement */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  [data-ambient-motion="true"] {
+    animation: none !important;
+    transition: none !important;
+  }
+  video[data-ambient-video="true"] {
+    display: none !important;
+  }
+}
