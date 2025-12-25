@@ -16,8 +16,9 @@
   --muted: 215 18% 72%;
 
   /* Brand accents */
-  --accent: 190 100% 55%;     /* electric cyan */
-  --accent-2: 262 100% 72%;   /* spectral violet */
+  --accent: 28 95% 58%;      /* warm orange */
+  --accent-2: 52 95% 60%;    /* golden yellow */
+  --accent-3: 118 45% 55%;   /* soft green */
 
   /* Status */
   --success: 145 70% 45%;
