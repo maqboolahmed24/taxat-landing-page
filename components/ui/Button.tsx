@@ -13,26 +13,19 @@ type BaseProps = {
 };
 
 type ButtonProps = BaseProps &
-  ButtonHTMLAttributes<HTMLButtonElement> & {
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "size"> & {
     href?: never;
     newTab?: never;
   };
 
 type AnchorProps = BaseProps &
-  AnchorHTMLAttributes<HTMLAnchorElement> & {
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "size"> & {
     href: string;
     newTab?: boolean;
   };
 
 export default function Button(props: ButtonProps | AnchorProps) {
-  const {
-    intent = "primary",
-    size = "md",
-    icon,
-    className,
-    children,
-    ...rest
-  } = props as any;
+  const { intent = "primary", size = "md", icon, className, children, ...rest } = props;
 
   const base =
     "group inline-flex items-center justify-center gap-2 rounded-xl font-medium tracking-tight transition-all duration-200 focus-visible:outline-none";
@@ -67,15 +60,18 @@ export default function Button(props: ButtonProps | AnchorProps) {
   const cls = cn(base, sizes[size], intents[intent], className);
 
   if ("href" in props && typeof props.href === "string") {
-    const { href, newTab } = props;
-    const anchorProps = rest as AnchorHTMLAttributes<HTMLAnchorElement>;
+    const { href: _href, newTab, ...anchorProps } = rest as AnchorHTMLAttributes<HTMLAnchorElement> & {
+      href?: string;
+      newTab?: boolean;
+    };
+    const isNewTab = props.newTab ?? newTab;
 
     return (
       <a
-        href={href}
+        href={props.href}
         className={cls}
-        target={newTab ? "_blank" : undefined}
-        rel={newTab ? "noreferrer" : undefined}
+        target={isNewTab ? "_blank" : undefined}
+        rel={isNewTab ? "noreferrer" : undefined}
         {...anchorProps}
       >
         <span className="relative">
