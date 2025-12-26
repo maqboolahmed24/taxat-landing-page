@@ -30,7 +30,7 @@ const steps: Step[] = [
       "Receipts + invoices (capture tools or uploads)",
       "Optional HMRC endpoints where authorised",
     ],
-    image: "/media/ui/client-overview.jpg",
+    image: "/media/ui/how-connect-sources.png",
   },
   {
     k: "run",
@@ -41,7 +41,7 @@ const steps: Step[] = [
       "Defence Graph linking each return figure to evidence",
       "Defence Score (0-100) to quantify readiness",
     ],
-    image: "/media/ui/defence-explorer.jpg",
+    image: "/media/ui/how-run-taxat.png",
   },
   {
     k: "file",
@@ -52,7 +52,7 @@ const steps: Step[] = [
       "Audit pack / Defence report export (PDF)",
       "Governed, replayable computation (versioned rules)",
     ],
-    image: "/media/ui/mission-control.jpg",
+    image: "/media/ui/how-file-confidence.png",
   },
 ];
 
