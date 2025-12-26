@@ -230,7 +230,11 @@ export default function FinalCTA() {
                   ) : null}
 
                   <p className="text-xs leading-relaxed text-muted">
-                    By submitting, you agree to be contacted about the beta. No spam. No HMRC affiliation implied.
+                    By submitting, you agree to be contacted about the beta. No spam. No HMRC affiliation implied. See our{" "}
+                    <a className="text-text underline decoration-border/70 underline-offset-4" href="/privacy">
+                      Privacy notice
+                    </a>
+                    .
                   </p>
 
                   <div className="flex justify-end">
@@ -290,6 +294,14 @@ export default function FinalCTA() {
                   </Button>
                 </form>
               )}
+
+              <p className="mt-3 text-xs leading-relaxed text-muted">
+                See our{" "}
+                <a className="text-text underline decoration-border/70 underline-offset-4" href="/privacy">
+                  Privacy notice
+                </a>{" "}
+                for details on how we handle your information.
+              </p>
 
               {updatesState === "error" && updatesError ? (
                 <div role="alert" aria-live="assertive" className="mt-3 text-sm text-danger">

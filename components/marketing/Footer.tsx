@@ -1,6 +1,7 @@
 import Section from "@/components/ui/Section";
 import GradientText from "@/components/ui/GradientText";
 import CurrentYear from "@/components/ui/CurrentYear";
+import CookieSettingsButton from "@/components/ui/CookieSettingsButton";
 
 export default function Footer() {
   return (
@@ -19,7 +20,7 @@ export default function Footer() {
           </div>
 
           <div className="md:col-span-7">
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid items-start gap-6 sm:grid-cols-3">
               <div className="grid gap-2 text-sm">
                 <div className="font-medium text-text">Product</div>
                 <a className="text-muted hover:text-text" href="#product">
@@ -41,6 +42,13 @@ export default function Footer() {
                 <a className="text-muted hover:text-text" href="#faq">
                   FAQ
                 </a>
+                <a className="text-muted hover:text-text" href="/privacy">
+                  Privacy notice
+                </a>
+                <a className="text-muted hover:text-text" href="/cookies">
+                  Cookie policy
+                </a>
+                <CookieSettingsButton className="text-left" />
                 <a className="text-muted hover:text-text" href="#beta">
                   Request beta
                 </a>

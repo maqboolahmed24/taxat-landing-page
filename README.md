@@ -62,6 +62,18 @@ The waitlist form posts to:
 
 Replace the stub with your real lead capture (Resend, Notion, Airtable, HubSpot, Supabase, etc.).
 
+## Cookie consent
+
+Set a signing secret for consent cookies:
+
+- `COOKIE_CONSENT_SECRET` (server-only)
+
+Optional cookie settings:
+
+- `COOKIE_DOMAIN` (e.g. `.taxat.co.uk` to share cookies across subdomains)
+- `COOKIE_SAMESITE` (`none`, `lax`, or `strict`)
+- `NEXT_PUBLIC_COOKIE_DOMAIN` and `NEXT_PUBLIC_COOKIE_SAMESITE` (used for client-side cleanup)
+
 ## Color system
 
 The theme is tokenised in:

@@ -1,8 +1,11 @@
 import nodemailer from "nodemailer";
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { isIP } from "net";
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/lib/site";
+import { getCookieValue } from "@/lib/cookies";
+import { buildCookieHeader, getCookieBaseOptions } from "@/lib/cookie-server";
+import { CLIENT_ID_COOKIE } from "@/lib/cookie-details";
 
 export const runtime = "nodejs";
 
@@ -25,8 +28,10 @@ type RateLimitEntry = {
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
-const CLIENT_ID_COOKIE = "taxat_client_id";
 const CLIENT_ID_TTL_DAYS = 365;
+const CLIENT_ID_MAX_LENGTH = 64;
+const CLIENT_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 declare global {
   // eslint-disable-next-line no-var
@@ -96,26 +101,47 @@ function getClientIp(req: Request) {
   return null;
 }
 
-function getCookieValue(header: string, name: string) {
-  const match = header.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  if (!match?.[1]) return null;
-  try {
-    return decodeURIComponent(match[1]);
-  } catch {
-    return null;
-  }
+function isValidClientId(value: string | null) {
+  if (!value) return false;
+  if (value.length > CLIENT_ID_MAX_LENGTH) return false;
+  return CLIENT_ID_PATTERN.test(value);
+}
+
+function getFallbackFingerprint(req: Request) {
+  const pieces = [
+    req.headers.get("user-agent") ?? "",
+    req.headers.get("accept-language") ?? "",
+    req.headers.get("sec-ch-ua") ?? "",
+    req.headers.get("sec-ch-ua-platform") ?? "",
+    req.headers.get("sec-ch-ua-mobile") ?? "",
+  ];
+  const raw = pieces.map((value) => value.trim()).filter(Boolean).join("|");
+  if (!raw) return null;
+  return createHash("sha256").update(raw).digest("hex").slice(0, 16);
 }
 
 function getClientId(req: Request) {
   const cookieHeader = req.headers.get("cookie") ?? "";
   const existing = getCookieValue(cookieHeader, CLIENT_ID_COOKIE);
-  if (existing) return { id: existing };
+  if (isValidClientId(existing)) return { id: existing };
 
   const id = randomUUID();
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  const cookie = `${CLIENT_ID_COOKIE}=${encodeURIComponent(id)}; Path=/; Max-Age=${
-    CLIENT_ID_TTL_DAYS * 24 * 60 * 60
-  }; SameSite=Lax; HttpOnly${secure}`;
+  const baseOptions = getCookieBaseOptions(req);
+  const cookie = buildCookieHeader(CLIENT_ID_COOKIE, id, {
+    ...baseOptions,
+    httpOnly: true,
+    maxAge: CLIENT_ID_TTL_DAYS * 24 * 60 * 60,
+  });
+
+  if (baseOptions.domain) {
+    const hostCookie = buildCookieHeader(CLIENT_ID_COOKIE, id, {
+      ...baseOptions,
+      domain: undefined,
+      httpOnly: true,
+      maxAge: CLIENT_ID_TTL_DAYS * 24 * 60 * 60,
+    });
+    return { id, setCookie: [cookie, hostCookie] };
+  }
 
   return { id, setCookie: cookie };
 }
@@ -123,6 +149,8 @@ function getClientId(req: Request) {
 function getRateLimitKey(req: Request, clientId: string) {
   const ip = getClientIp(req);
   if (ip) return `ip:${ip}`;
+  const fingerprint = getFallbackFingerprint(req);
+  if (fingerprint) return `fp:${fingerprint}`;
   return `cid:${clientId}`;
 }
 
@@ -184,9 +212,18 @@ async function isRateLimited(key: string) {
   return isRateLimitedMemory(key);
 }
 
-function jsonResponse(body: Record<string, unknown>, init: ResponseInit, setCookie?: string) {
+function jsonResponse(
+  body: Record<string, unknown>,
+  init: ResponseInit,
+  setCookie?: string | string[]
+) {
   const res = NextResponse.json(body, init);
-  if (setCookie) res.headers.append("Set-Cookie", setCookie);
+  if (setCookie) {
+    const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+    for (const cookie of cookies) {
+      res.headers.append("Set-Cookie", cookie);
+    }
+  }
   return res;
 }
 

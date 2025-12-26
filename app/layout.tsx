@@ -4,6 +4,11 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site";
 import Providers from "@/components/Providers";
+import CookieBanner from "@/components/ui/CookieBanner";
+import { cookies } from "next/headers";
+import { COOKIE_PREFS_NAME } from "@/lib/cookie-consent-shared";
+import { decodeCookiePrefs } from "@/lib/cookie-consent-server";
+import { CLIENT_ID_COOKIE } from "@/lib/cookie-details";
 
 const fontSans = Inter({
   subsets: ["latin"],
@@ -40,10 +45,22 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = cookies();
+  const rawPrefs = cookieStore.get(COOKIE_PREFS_NAME)?.value ?? null;
+  const { prefs, invalid } = decodeCookiePrefs(rawPrefs);
+  const clientIdPresent = Boolean(cookieStore.get(CLIENT_ID_COOKIE));
+
   return (
     <html lang="en" className="dark">
       <body className={`${fontSans.variable} ${fontDisplay.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <CookieBanner
+            initialPrefs={prefs}
+            initialPrefsInvalid={invalid}
+            clientIdPresent={clientIdPresent}
+          />
+        </Providers>
       </body>
     </html>
   );
