@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 
 export default function Hero() {
   const [poster, setPoster] = useState("/media/hero-mobile.webp");
+  const [isDesktop, setIsDesktop] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [videoPaused, setVideoPaused] = useState(false);
@@ -19,12 +20,22 @@ export default function Hero() {
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 769px)");
-    const updatePoster = () => {
-      setPoster(mq.matches ? "/media/hero-poster.webp" : "/media/hero-mobile.webp");
+    const updateViewport = () => {
+      const matches = mq.matches;
+      setIsDesktop(matches);
+      setPoster(matches ? "/media/hero-poster.webp" : "/media/hero-mobile.webp");
     };
-    updatePoster();
-    mq.addEventListener("change", updatePoster);
-    return () => mq.removeEventListener("change", updatePoster);
+    updateViewport();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", updateViewport);
+      return () => mq.removeEventListener("change", updateViewport);
+    }
+    const legacy = mq as MediaQueryList & {
+      addListener?: (cb: () => void) => void;
+      removeListener?: (cb: () => void) => void;
+    };
+    legacy.addListener?.(updateViewport);
+    return () => legacy.removeListener?.(updateViewport);
   }, []);
 
   useEffect(() => {
@@ -43,7 +54,7 @@ export default function Hero() {
     return () => legacy.removeListener?.(update);
   }, []);
 
-  const showVideo = !reducedMotion && !videoFailed;
+  const showVideo = isDesktop && !reducedMotion && !videoFailed;
 
   const toggleVideo = async () => {
     const video = videoRef.current;
@@ -82,7 +93,6 @@ export default function Hero() {
               onPause={() => setVideoPaused(true)}
               onPlay={() => setVideoPaused(false)}
             >
-              <source src="/media/hero-loop-mobile.mp4" type="video/mp4" media="(max-width: 768px)" />
               <source src="/media/hero-loop.mp4" type="video/mp4" />
             </video>
           ) : (
