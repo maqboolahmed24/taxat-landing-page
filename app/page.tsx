@@ -12,12 +12,14 @@ import FinalCTA from "@/components/marketing/FinalCTA";
 import Footer from "@/components/marketing/Footer";
 import CursorGlow from "@/components/marketing/CursorGlow";
 import ScrollProgress from "@/components/marketing/ScrollProgress";
+import StickyCTA from "@/components/marketing/StickyCTA";
 
 export default function Page() {
   return (
     <main className="relative overflow-x-clip">
       <CursorGlow />
       <ScrollProgress />
+      <StickyCTA />
 
       <Header />
       <Hero />

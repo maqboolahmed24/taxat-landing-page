@@ -73,18 +73,25 @@ export default function HowItWorks() {
             scales with clients · without adding headcount.
           </p>
 
-          <div className="mt-7 grid gap-2">
+          <div className="mt-7 grid gap-2" role="tablist" aria-label="How it works steps">
             {steps.map((s, idx) => {
               const is = s.k === active;
+              const tabId = `how-tab-${s.k}`;
+              const panelId = `how-panel-${s.k}`;
               return (
                 <button
                   key={s.k}
                   className={cn(
-                    "group flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-colors",
+                    "group glow-border flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-colors",
                     is
                       ? "border-accent/40 bg-accent/10"
                       : "border-border/60 bg-surface/25 hover:bg-surface/40"
                   )}
+                  id={tabId}
+                  role="tab"
+                  aria-selected={is}
+                  aria-controls={panelId}
+                  tabIndex={is ? 0 : -1}
                   onClick={() => {
                     setActive(s.k);
                     track("how_step_select", { step: s.k });
@@ -115,7 +122,7 @@ export default function HowItWorks() {
         </div>
 
         <div className="md:col-span-7">
-          <div className="noise overflow-hidden rounded-3xl border border-border/60 bg-surface/20 shadow-glow">
+          <div className="noise overflow-hidden rounded-none border border-border/60 bg-surface/20 shadow-glow">
             <div className="border-b border-border/60 bg-surface/40 px-6 py-4">
               <div className="text-sm font-medium text-text">{step.title}</div>
               <div className="mt-1 text-sm text-muted">{step.desc}</div>
@@ -130,6 +137,10 @@ export default function HowItWorks() {
                   exit={{ opacity: 0, y: 10, filter: "blur(8px)" }}
                   transition={{ duration: 0.35 }}
                   className="grid gap-6 lg:grid-cols-12"
+                  role="tabpanel"
+                  id={`how-panel-${step.k}`}
+                  aria-labelledby={`how-tab-${step.k}`}
+                  tabIndex={0}
                 >
                   <div className="lg:col-span-7">
                     <Image
@@ -137,7 +148,7 @@ export default function HowItWorks() {
                       alt={step.title}
                       width={2400}
                       height={1500}
-                      className="rounded-2xl border border-border/60 shadow-glow"
+                      className="rounded-none border border-border/60 shadow-glow"
                     />
                   </div>
                   <div className="lg:col-span-5">
@@ -152,10 +163,10 @@ export default function HowItWorks() {
                     </ul>
 
                     <div className="mt-6 rounded-2xl border border-border/60 bg-surface/30 p-4">
-                    <div className="text-xs font-medium text-text">Clarity by design</div>
-                    <div className="mt-1 text-xs leading-relaxed text-muted">
-                      Confirmed and inferred links are clearly labelled so reviewers know what’s verified.
-                    </div>
+                      <div className="text-xs font-medium text-text">Clarity by design</div>
+                      <div className="mt-1 text-xs leading-relaxed text-muted">
+                        Confirmed and inferred links are clearly labelled so reviewers know what’s verified.
+                      </div>
                     </div>
                   </div>
                 </motion.div>

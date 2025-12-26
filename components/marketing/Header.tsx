@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import Button from "@/components/ui/Button";
 import { track } from "@/lib/analytics";
 import { Menu, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -16,6 +15,7 @@ const navItems = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string>("");
+  const mobileMenuId = "mobile-menu";
 
   const ids = useMemo(() => navItems.map((n) => n.id), []);
 
@@ -48,10 +48,10 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40">
       <div className="glass border-b border-border/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 md:px-10">
+        <div className="flex w-full items-center justify-between px-3 py-3 md:px-6">
           <a href="#top" className="flex items-center gap-3" aria-label="Taxat home">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-[radial-gradient(circle_at_30%_20%,hsl(var(--accent)/0.9),transparent_55%),radial-gradient(circle_at_80%_70%,hsl(var(--accent-2)/0.85),transparent_60%)] ring-1 ring-border/60 shadow-glow">
-              <span className="font-display text-sm font-semibold text-text">T</span>
+            <div className="grid h-9 w-9 place-items-center">
+              <img src="/favicon.svg" alt="Taxat logo" width={36} height={36} className="h-9 w-9" />
             </div>
             <div className="leading-tight">
               <div className="font-display text-sm font-semibold tracking-tight text-text">Taxat</div>
@@ -82,35 +82,19 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 md:flex">
-            <Button
-              intent="ghost"
-              href="#demo"
-              onClick={() => track("cta_secondary_click", { location: "nav" })}
-            >
-              Book demo
-            </Button>
-            <Button
-              intent="primary"
-              href="#beta"
-              onClick={() => track("cta_primary_click", { location: "nav" })}
-            >
-              Request beta
-            </Button>
-          </div>
-
           <button
-            className="grid h-11 w-11 place-items-center rounded-xl border border-border/70 bg-surface/50 text-text md:hidden"
+            className="glow-border grid h-11 w-11 place-items-center rounded-xl border border-border/70 bg-surface/50 text-text md:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls={mobileMenuId}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
         {/* Mobile menu */}
-        <div className={cn("md:hidden", open ? "block" : "hidden")}>
+        <div id={mobileMenuId} className={cn("md:hidden", open ? "block" : "hidden")}>
           <div className="mx-auto max-w-6xl px-6 pb-4">
             <div className="rounded-2xl border border-border/70 bg-surface/40 p-4">
               <div className="grid gap-2">
@@ -127,28 +111,6 @@ export default function Header() {
                     {item.label}
                   </a>
                 ))}
-              </div>
-              <div className="mt-4 grid gap-2">
-                <Button
-                  intent="secondary"
-                  href="#demo"
-                  onClick={() => {
-                    track("cta_secondary_click", { location: "nav_mobile" });
-                    setOpen(false);
-                  }}
-                >
-                  Book demo
-                </Button>
-                <Button
-                  intent="primary"
-                  href="#beta"
-                  onClick={() => {
-                    track("cta_primary_click", { location: "nav_mobile" });
-                    setOpen(false);
-                  }}
-                >
-                  Request beta
-                </Button>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-muted">
                 Not affiliated with HMRC. Taxat is an independent defence layer that can use authorised HMRC APIs where permitted.

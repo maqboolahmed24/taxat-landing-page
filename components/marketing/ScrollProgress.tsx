@@ -8,6 +8,7 @@ export default function ScrollProgress() {
   useEffect(() => {
     const el = barRef.current;
     if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let raf = 0;
 
@@ -34,7 +35,7 @@ export default function ScrollProgress() {
   }, []);
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-50 h-[2px] bg-transparent">
+    <div className="fixed left-0 right-0 top-0 z-50 h-[2px] bg-transparent motion-reduce:hidden">
       <div
         ref={barRef}
         className="h-full origin-left bg-[linear-gradient(90deg,hsl(var(--accent)),hsl(var(--accent-2)))] opacity-80"

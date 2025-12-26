@@ -49,6 +49,11 @@ Edit:
 - `app/layout.tsx` (`metadataBase`)
 - `app/sitemap.ts` and `app/robots.ts`
 
+## Demo calendar link
+
+Set `NEXT_PUBLIC_BOOK_DEMO_URL` to your booking calendar URL (Calendly/Cal.com/etc.).
+If unset, the demo CTA falls back to email.
+
 ## Waitlist form
 
 The waitlist form posts to:

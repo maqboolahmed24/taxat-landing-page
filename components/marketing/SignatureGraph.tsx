@@ -85,6 +85,8 @@ function statusIcon(status: Status) {
 
 export default function SignatureGraph() {
   const [selected, setSelected] = useState<Box>(boxes[0]);
+  const titleId = "defence-graph-title";
+  const descId = "defence-graph-desc";
 
   const edges = useMemo(() => edgesByBox[selected.id] ?? [], [selected.id]);
   const activeNodeIds = useMemo(() => {
@@ -101,13 +103,13 @@ export default function SignatureGraph() {
   const nodeById = useMemo(() => Object.fromEntries(nodes.map((n) => [n.id, n])), []);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-12">
+    <div className="grid gap-5 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]">
       {/* Left panel: boxes */}
-      <div className="lg:col-span-4">
+      <div>
         <div className="rounded-2xl border border-border/60 bg-surface/40 p-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-text">Return boxes</div>
-            <div className="text-xs text-muted">Sample view</div>
+            <div className="text-sm font-medium text-text whitespace-nowrap">Return boxes</div>
+            <div className="text-xs text-muted whitespace-nowrap">Sample view</div>
           </div>
 
           <div className="mt-3 grid gap-2">
@@ -117,7 +119,7 @@ export default function SignatureGraph() {
                 <button
                   key={b.id}
                   className={cn(
-                    "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
+                    "glow-border flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
                     is
                       ? "border-accent/40 bg-accent/10"
                       : "border-border/60 bg-surface/30 hover:bg-surface/50"
@@ -145,8 +147,8 @@ export default function SignatureGraph() {
           {/* Defence score */}
           <div className="mt-4 rounded-xl border border-border/60 bg-surface/30 p-3">
             <div className="flex items-center justify-between">
-              <div className="text-xs text-muted">Defence Score</div>
-              <div className="text-xs text-muted">0-100</div>
+              <div className="text-xs text-muted whitespace-nowrap">Defence Score</div>
+              <div className="text-xs text-muted whitespace-nowrap">0-100</div>
             </div>
             <div className="mt-2 flex items-center gap-3">
               <div className="relative grid h-12 w-12 place-items-center rounded-full border border-border/70 bg-surface/40">
@@ -186,14 +188,23 @@ export default function SignatureGraph() {
       </div>
 
       {/* Graph */}
-      <div className="lg:col-span-8">
+      <div>
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-surface/20 p-4">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(circle_at_1px_1px,hsl(var(--border)/0.55)_1px,transparent_0)] [background-size:26px_26px] [mask-image:radial-gradient(60%_60%_at_55%_40%,black,transparent)]"
           />
 
-          <svg viewBox="0 0 760 320" className="relative z-10 h-[320px] w-full">
+          <svg
+            viewBox="0 0 760 320"
+            className="relative z-10 h-[320px] w-full"
+            role="img"
+            aria-labelledby={`${titleId} ${descId}`}
+          >
+            <title id={titleId}>Defence graph sample</title>
+            <desc id={descId}>
+              A sample graph linking a return box to compute steps, transaction groups, evidence groups, and rules.
+            </desc>
             {/* Edges */}
             {edges.map((e, idx) => {
               const a = nodeById[e.from];

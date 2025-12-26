@@ -28,7 +28,7 @@ export default function Button(props: ButtonProps | AnchorProps) {
   const { intent = "primary", size = "md", icon, className, children, ...rest } = props;
 
   const base =
-    "group inline-flex items-center justify-center gap-2 rounded-xl font-medium tracking-tight transition-all duration-200 focus-visible:outline-none";
+    "group glow-border inline-flex items-center justify-center gap-2 rounded-xl font-medium tracking-tight transition-all duration-200 focus-visible:outline-none";
 
   const sizes: Record<Size, string> = {
     sm: "h-10 px-4 text-sm",

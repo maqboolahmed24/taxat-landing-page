@@ -8,8 +8,21 @@ import { track } from "@/lib/analytics";
 import { fadeUp, stagger } from "@/lib/motion";
 import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Hero() {
+  const [poster, setPoster] = useState("/media/hero-mobile.webp");
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 769px)");
+    const updatePoster = () => {
+      setPoster(mq.matches ? "/media/hero-poster.webp" : "/media/hero-mobile.webp");
+    };
+    updatePoster();
+    mq.addEventListener("change", updatePoster);
+    return () => mq.removeEventListener("change", updatePoster);
+  }, []);
+
   return (
     <Section id="top" size="lg" className="relative">
       {/* Background video */}
@@ -17,13 +30,14 @@ export default function Hero() {
         <div className="absolute inset-0">
           <video
             data-ambient-video="true"
+            aria-hidden
             className="h-full w-full object-cover opacity-60 [mask-image:radial-gradient(70%_60%_at_50%_35%,black,transparent)]"
             autoPlay
             muted
             loop
             playsInline
             preload="metadata"
-            poster="/media/hero-poster.webp"
+            poster={poster}
           >
             <source src="/media/hero-loop-mobile.mp4" type="video/mp4" media="(max-width: 768px)" />
             <source src="/media/hero-loop.mp4" type="video/mp4" />
@@ -31,10 +45,14 @@ export default function Hero() {
         </div>
 
         {/* Fallback poster layer */}
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 bg-[url('/media/hero-poster.webp')] bg-cover bg-center opacity-70"
-        />
+        <picture aria-hidden className="absolute inset-0 -z-10 opacity-70">
+          <source srcSet="/media/hero-mobile.webp" media="(max-width: 768px)" />
+          <img
+            src="/media/hero-poster.webp"
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </picture>
 
         {/* Subtle grid + vignette */}
         <div

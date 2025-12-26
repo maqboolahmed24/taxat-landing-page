@@ -21,7 +21,7 @@ export default function Section({
         : "py-20 md:py-28";
 
   return (
-    <section id={id} className={cn(pad, className)}>
+    <section id={id} className={cn("scroll-mt-24 md:scroll-mt-32", pad, className)}>
       <Container>{children}</Container>
     </section>
   );

@@ -10,7 +10,18 @@ type WaitlistPayload = {
   saVolume?: string;
   stack?: string;
   notes?: string;
+  intent?: string;
+  website?: string;
 };
+
+type RateLimitEntry = {
+  count: number;
+  resetAt: number;
+};
+
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_MAX = 5;
+const rateLimit = new Map<string, RateLimitEntry>();
 
 function requireEnv(name: string) {
   const value = process.env[name];
@@ -24,18 +35,60 @@ function normalize(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getClientIp(req: Request) {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]?.trim();
+  return (
+    req.headers.get("x-real-ip") ??
+    req.headers.get("cf-connecting-ip") ??
+    "unknown"
+  );
+}
+
+function isRateLimited(key: string) {
+  const now = Date.now();
+  const entry = rateLimit.get(key);
+  if (!entry || entry.resetAt < now) {
+    rateLimit.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return true;
+  entry.count += 1;
+  return false;
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as WaitlistPayload;
+    const intent = normalize(body.intent) === "updates" ? "updates" : "beta";
     const name = normalize(body.name);
     const email = normalize(body.email).toLowerCase();
     const firmSize = normalize(body.firmSize);
     const saVolume = normalize(body.saVolume);
     const stack = normalize(body.stack);
     const notes = normalize(body.notes);
+    const website = normalize(body.website);
+
+    if (website) {
+      return NextResponse.json({ ok: true });
+    }
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ ok: false, error: "Valid email required" }, { status: 400 });
+    }
+
+    if (intent === "beta") {
+      if (!name) {
+        return NextResponse.json({ ok: false, error: "Name required" }, { status: 400 });
+      }
+      if (!firmSize || !saVolume) {
+        return NextResponse.json({ ok: false, error: "Firm size and SA volume required" }, { status: 400 });
+      }
+    }
+
+    const ip = getClientIp(req);
+    if (isRateLimited(ip)) {
+      return NextResponse.json({ ok: false, error: "Too many requests. Try again shortly." }, { status: 429 });
     }
 
     const smtpHost = requireEnv("SMTP_HOST");
@@ -56,17 +109,14 @@ export async function POST(req: Request) {
       auth: { user: smtpUser, pass: smtpPass },
     });
 
+    const isUpdates = intent === "updates";
     const submittedAt = new Date().toISOString();
-    const ip =
-      req.headers.get("x-forwarded-for") ??
-      req.headers.get("x-real-ip") ??
-      req.headers.get("cf-connecting-ip") ??
-      "unknown";
     const userAgent = req.headers.get("user-agent") ?? "unknown";
 
     const adminText = [
-      "New Taxat beta request",
+      isUpdates ? "New Taxat updates signup" : "New Taxat beta request",
       "",
+      `Intent: ${intent}`,
       `Name: ${name || "-"}`,
       `Email: ${email}`,
       `Firm size: ${firmSize || "-"}`,
@@ -83,7 +133,7 @@ export async function POST(req: Request) {
       from,
       to: smtpUser,
       replyTo: email,
-      subject: "New Taxat beta request",
+      subject: isUpdates ? "New Taxat updates signup" : "New Taxat beta request",
       text: adminText,
     });
 
@@ -91,8 +141,12 @@ export async function POST(req: Request) {
     const userText = [
       `Hi ${recipientName},`,
       "",
-      "Thanks for requesting Taxat beta access. We'll review your details and get back to you shortly.",
-      "If you'd like to add more context, just reply to this email with any notes or screenshots.",
+      isUpdates
+        ? "Thanks for joining the Taxat updates list. We'll keep you posted on product drops and availability windows."
+        : "Thanks for requesting Taxat beta access. We'll review your details and get back to you shortly.",
+      isUpdates
+        ? "If you'd like a demo sooner, reply with your preferred times."
+        : "If you'd like to add more context, just reply to this email with any notes or screenshots.",
       "",
       "Talk soon,",
       "Taxat",
@@ -101,7 +155,7 @@ export async function POST(req: Request) {
     await transporter.sendMail({
       from,
       to: email,
-      subject: "Taxat beta request received",
+      subject: isUpdates ? "You're on the Taxat updates list" : "Taxat beta request received",
       text: userText,
     });
 

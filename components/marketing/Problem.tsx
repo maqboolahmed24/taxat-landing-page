@@ -49,7 +49,8 @@ export default function Problem() {
           <div className="noise relative overflow-hidden rounded-3xl border border-border/60 bg-surface/30 shadow-glow">
             <Image
               src="/media/still-1.webp"
-              alt="Cinematic background"
+              alt=""
+              aria-hidden
               width={2400}
               height={1350}
               className="h-full w-full object-cover opacity-90"

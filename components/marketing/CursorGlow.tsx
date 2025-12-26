@@ -16,6 +16,7 @@ export default function CursorGlow() {
 
     const mq = window.matchMedia("(pointer: coarse)");
     if (mq.matches) return; // no cursor on touch
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let raf = 0;
     let x = window.innerWidth * 0.5;
@@ -42,7 +43,7 @@ export default function CursorGlow() {
     <div
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10 opacity-80 [background:radial-gradient(600px_circle_at_var(--x,50%)_var(--y,10%),hsl(var(--accent)/0.10),transparent_55%),radial-gradient(700px_circle_at_calc(var(--x,50%)+240px)_calc(var(--y,10%)+140px),hsl(var(--accent-3)/0.10),transparent_55%)]"
+      className="pointer-events-none fixed inset-0 -z-10 opacity-80 [background:radial-gradient(600px_circle_at_var(--x,50%)_var(--y,10%),hsl(var(--accent)/0.10),transparent_55%),radial-gradient(700px_circle_at_calc(var(--x,50%)+240px)_calc(var(--y,10%)+140px),hsl(var(--accent-3)/0.10),transparent_55%)] motion-reduce:hidden"
     />
   );
 }
