@@ -23,12 +23,16 @@ export default function CursorGlow() {
 
     const onChange = () => evaluate();
     const addListener = (mq: MediaQueryList, handler: () => void) => {
-      if ("addEventListener" in mq) {
+      if (typeof mq.addEventListener === "function") {
         mq.addEventListener("change", handler);
         return () => mq.removeEventListener("change", handler);
       }
-      mq.addListener(handler);
-      return () => mq.removeListener(handler);
+      const legacy = mq as MediaQueryList & {
+        addListener?: (cb: () => void) => void;
+        removeListener?: (cb: () => void) => void;
+      };
+      legacy.addListener?.(handler);
+      return () => legacy.removeListener?.(handler);
     };
 
     const removeMotion = addListener(motionQuery, onChange);

@@ -31,12 +31,16 @@ export default function Hero() {
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReducedMotion(motionQuery.matches);
     update();
-    if ("addEventListener" in motionQuery) {
+    if (typeof motionQuery.addEventListener === "function") {
       motionQuery.addEventListener("change", update);
       return () => motionQuery.removeEventListener("change", update);
     }
-    motionQuery.addListener(update);
-    return () => motionQuery.removeListener(update);
+    const legacy = motionQuery as MediaQueryList & {
+      addListener?: (cb: () => void) => void;
+      removeListener?: (cb: () => void) => void;
+    };
+    legacy.addListener?.(update);
+    return () => legacy.removeListener?.(update);
   }, []);
 
   const showVideo = !reducedMotion && !videoFailed;
