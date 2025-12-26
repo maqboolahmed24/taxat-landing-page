@@ -370,7 +370,7 @@ export default function CookieBanner({
                     You can choose which cookies we use. We use strictly necessary cookies to make
                     the site work and to keep it secure. Optional cookies help us improve the site
                     (analytics) and measure marketing (marketing). You can change your choices at
-                    any time by clicking "Cookie settings".
+                    any time by clicking &quot;Cookie settings&quot;.
                   </p>
                 </div>
                 <button

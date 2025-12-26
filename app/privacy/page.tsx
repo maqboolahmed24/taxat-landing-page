@@ -381,7 +381,7 @@ export default function PrivacyNoticePage() {
                   >
                     https://www.taxat.co.uk/subprocessors
                   </a>{" "}
-                  (or "available on request").
+                  (or &quot;available on request&quot;).
                 </p>
               </div>
 
@@ -389,7 +389,7 @@ export default function PrivacyNoticePage() {
                 <h3 className="text-base font-semibold text-text">7.2 Your accounting firm and authorised users</h3>
                 <p>
                   If you are an end-client, your data will be accessible to the accounting firm and its authorised users (as the
-                  controller). Taxat is not responsible for the firm's internal access policies.
+                  controller). Taxat is not responsible for the firm&apos;s internal access policies.
                 </p>
               </div>
 
@@ -459,7 +459,7 @@ export default function PrivacyNoticePage() {
                   from our last interaction, unless you become a customer or request deletion sooner (subject to legal retention needs).
                 </li>
                 <li>
-                  <span className="font-medium text-text">C) Platform user account data:</span> for the duration of the firm's contract and a
+                  <span className="font-medium text-text">C) Platform user account data:</span> for the duration of the firm&apos;s contract and a
                   short period after termination (e.g., [30-90 days]) to allow data export and account closure, unless longer retention is
                   required for legal claims, security, or compliance.
                 </li>
@@ -512,7 +512,7 @@ export default function PrivacyNoticePage() {
               <h2 className="text-xl font-semibold text-text">12) Marketing preferences</h2>
               <p>If you receive marketing emails from us, you can opt out at any time by:</p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>using the "unsubscribe" link in the email, or</li>
+                <li>using the &quot;unsubscribe&quot; link in the email, or</li>
                 <li>
                   emailing{" "}
                   <a
@@ -554,7 +554,7 @@ export default function PrivacyNoticePage() {
             <section className="space-y-3">
               <h2 className="text-xl font-semibold text-text">14) Complaints</h2>
               <p>If you have concerns, please contact us first at admin@taxat.co.uk and we will try to resolve the issue.</p>
-              <p>You also have the right to lodge a complaint with the UK Information Commissioner's Office (ICO):</p>
+              <p>You also have the right to lodge a complaint with the UK Information Commissioner&apos;s Office (ICO):</p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>
                   Website:{" "}
@@ -581,7 +581,7 @@ export default function PrivacyNoticePage() {
             <section className="space-y-3">
               <h2 className="text-xl font-semibold text-text">16) Changes to this privacy notice</h2>
               <p>
-                We may update this notice from time to time. We will post the updated version on our website and change the "Last updated" date.
+                We may update this notice from time to time. We will post the updated version on our website and change the &quot;Last updated&quot; date.
                 If changes are material, we may provide additional notice.
               </p>
             </section>
