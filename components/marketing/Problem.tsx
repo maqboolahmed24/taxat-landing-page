@@ -45,7 +45,7 @@ export default function Problem() {
           </p>
         </div>
 
-        <div className="md:col-span-6">
+        <div className="md:col-span-6 md:mt-[19.55rem]">
           <div className="noise relative overflow-hidden rounded-3xl border border-border/60 bg-surface/30 shadow-glow">
             <Image
               src="/media/still-1.webp"
@@ -55,6 +55,7 @@ export default function Problem() {
               height={1350}
               className="h-full w-full object-cover opacity-90"
               priority={false}
+              sizes="(min-width: 1024px) 50vw, 100vw"
             />
             <div className="absolute inset-0 bg-[radial-gradient(900px_circle_at_30%_20%,hsl(var(--accent)/0.20),transparent_55%)]" />
             <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.55),transparent_55%)]" />

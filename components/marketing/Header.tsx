@@ -45,6 +45,17 @@ export default function Header() {
     return () => io.disconnect();
   }, [ids]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <header className="sticky top-0 z-40">
       <div className="glass border-b border-border/60">
@@ -68,6 +79,7 @@ export default function Header() {
                   "relative text-sm text-muted transition-colors hover:text-text",
                   active === item.id && "text-text"
                 )}
+                aria-current={active === item.id ? "location" : undefined}
                 onClick={() => track("nav_click", { target: item.id })}
               >
                 {item.label}
@@ -94,7 +106,11 @@ export default function Header() {
         </div>
 
         {/* Mobile menu */}
-        <div id={mobileMenuId} className={cn("md:hidden", open ? "block" : "hidden")}>
+        <nav
+          id={mobileMenuId}
+          aria-label="Primary"
+          className={cn("md:hidden", open ? "block" : "hidden")}
+        >
           <div className="mx-auto max-w-6xl px-6 pb-4">
             <div className="rounded-2xl border border-border/70 bg-surface/40 p-4">
               <div className="grid gap-2">
@@ -103,6 +119,7 @@ export default function Header() {
                     key={item.id}
                     href={`#${item.id}`}
                     className="rounded-xl px-3 py-2 text-sm text-muted hover:bg-surface/60 hover:text-text"
+                    aria-current={active === item.id ? "location" : undefined}
                     onClick={() => {
                       track("nav_click", { target: item.id, mobile: true });
                       setOpen(false);
@@ -117,7 +134,7 @@ export default function Header() {
               </p>
             </div>
           </div>
-        </div>
+        </nav>
       </div>
     </header>
   );

@@ -8,7 +8,8 @@ import { cn } from "@/lib/cn";
 import { track } from "@/lib/analytics";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
 
 type Step = {
   k: string;
@@ -57,8 +58,36 @@ const steps: Step[] = [
 
 export default function HowItWorks() {
   const [active, setActive] = useState(steps[0].k);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const step = useMemo(() => steps.find((s) => s.k === active) ?? steps[0], [active]);
+  const moveFocus = (nextIndex: number) => {
+    const next = steps[nextIndex];
+    setActive(next.k);
+    requestAnimationFrame(() => tabRefs.current[nextIndex]?.focus());
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      event.preventDefault();
+      moveFocus((idx + 1) % steps.length);
+      return;
+    }
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      event.preventDefault();
+      moveFocus((idx - 1 + steps.length) % steps.length);
+      return;
+    }
+    if (event.key === "Home") {
+      event.preventDefault();
+      moveFocus(0);
+      return;
+    }
+    if (event.key === "End") {
+      event.preventDefault();
+      moveFocus(steps.length - 1);
+    }
+  };
 
   return (
     <Section id="how" size="lg">
@@ -87,11 +116,15 @@ export default function HowItWorks() {
                       ? "border-accent/40 bg-accent/10"
                       : "border-border/60 bg-surface/25 hover:bg-surface/40"
                   )}
+                  ref={(el) => {
+                    tabRefs.current[idx] = el;
+                  }}
                   id={tabId}
                   role="tab"
                   aria-selected={is}
                   aria-controls={panelId}
                   tabIndex={is ? 0 : -1}
+                  onKeyDown={(event) => onKeyDown(event, idx)}
                   onClick={() => {
                     setActive(s.k);
                     track("how_step_select", { step: s.k });
@@ -149,6 +182,7 @@ export default function HowItWorks() {
                       width={2400}
                       height={1500}
                       className="rounded-none border border-border/60 shadow-glow"
+                      sizes="(min-width: 1024px) 58vw, 100vw"
                     />
                   </div>
                   <div className="lg:col-span-5">

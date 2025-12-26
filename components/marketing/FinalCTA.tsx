@@ -178,6 +178,7 @@ export default function FinalCTA() {
                         required
                         className="h-11 rounded-xl border border-border/80 bg-surface/40 px-4 text-text"
                         defaultValue=""
+                        aria-describedby="firm-size-help"
                       >
                         <option value="" disabled>
                           Select…
@@ -188,7 +189,9 @@ export default function FinalCTA() {
                         <option>11-50 staff</option>
                         <option>50+ staff</option>
                       </select>
-                      <span className="text-xs text-muted">We prioritise practices with repeatable workflows to validate.</span>
+                      <span id="firm-size-help" className="text-xs text-muted">
+                        We prioritise practices with repeatable workflows to validate.
+                      </span>
                     </label>
 
                     <label className="grid gap-2 text-sm">
@@ -198,6 +201,7 @@ export default function FinalCTA() {
                         required
                         className="h-11 rounded-xl border border-border/80 bg-surface/40 px-4 text-text"
                         defaultValue=""
+                        aria-describedby="sa-volume-help"
                       >
                         <option value="" disabled>
                           Select…
@@ -208,7 +212,9 @@ export default function FinalCTA() {
                         <option>500-1000</option>
                         <option>1000+</option>
                       </select>
-                      <span className="text-xs text-muted">Rough estimate is fine.</span>
+                      <span id="sa-volume-help" className="text-xs text-muted">
+                        Rough estimate is fine.
+                      </span>
                     </label>
                   </div>
 

@@ -8,7 +8,7 @@
    - Keep tokens semantic, not raw hex.
 ---------------------------- */
 :root {
-  --bg: 222 47% 4%;
+  --bg: 222 60% 2%;
   --surface: 222 45% 7%;
   --surface-2: 222 40% 10%;
   --border: 220 22% 20%;
@@ -111,8 +111,8 @@ body {
   .glow-border::before {
     inset: -1px;
     padding: 1px;
-    background: conic-gradient(
-      from 180deg,
+    background: linear-gradient(
+      120deg,
       hsl(var(--accent) / 0.95),
       hsl(210 95% 60% / 0.95),
       hsl(330 90% 66% / 0.95),
@@ -120,6 +120,8 @@ body {
       hsl(var(--accent-3) / 0.95),
       hsl(var(--accent) / 0.95)
     );
+    background-size: 300% 300%;
+    background-position: 0% 50%;
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
@@ -130,6 +132,13 @@ body {
   .glow-border:focus-visible::before,
   .glow-border:focus-within::before {
     opacity: 1;
+    animation: glow-flow 3.2s linear infinite;
+  }
+}
+
+@keyframes glow-flow {
+  to {
+    background-position: 200% 50%;
   }
 }
 
@@ -145,6 +154,9 @@ body {
   .animate-shimmer,
   .animate-float,
   .animate-pulseGlow {
+    animation: none !important;
+  }
+  .glow-border::before {
     animation: none !important;
   }
   video[data-ambient-video="true"] {

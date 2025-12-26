@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Subtle cursor-follow glow (premium feel).
@@ -9,14 +9,40 @@ import { useEffect, useRef } from "react";
  */
 export default function CursorGlow() {
   const ref = useRef<HTMLDivElement | null>(null);
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const pointerQuery = window.matchMedia("(pointer: coarse)");
+
+    const evaluate = () => {
+      setEnabled(!motionQuery.matches && !pointerQuery.matches);
+    };
+
+    evaluate();
+
+    const onChange = () => evaluate();
+    const addListener = (mq: MediaQueryList, handler: () => void) => {
+      if ("addEventListener" in mq) {
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+      }
+      mq.addListener(handler);
+      return () => mq.removeListener(handler);
+    };
+
+    const removeMotion = addListener(motionQuery, onChange);
+    const removePointer = addListener(pointerQuery, onChange);
+
+    return () => {
+      removeMotion();
+      removePointer();
+    };
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-
-    const mq = window.matchMedia("(pointer: coarse)");
-    if (mq.matches) return; // no cursor on touch
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el || !enabled) return;
 
     let raf = 0;
     let x = window.innerWidth * 0.5;
@@ -37,7 +63,9 @@ export default function CursorGlow() {
       window.removeEventListener("pointermove", onMove);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [enabled]);
+
+  if (!enabled) return null;
 
   return (
     <div

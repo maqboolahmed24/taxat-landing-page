@@ -8,10 +8,14 @@ import { track } from "@/lib/analytics";
 import { fadeUp, stagger } from "@/lib/motion";
 import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Hero() {
   const [poster, setPoster] = useState("/media/hero-mobile.webp");
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 769px)");
@@ -23,36 +27,67 @@ export default function Hero() {
     return () => mq.removeEventListener("change", updatePoster);
   }, []);
 
+  useEffect(() => {
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(motionQuery.matches);
+    update();
+    if ("addEventListener" in motionQuery) {
+      motionQuery.addEventListener("change", update);
+      return () => motionQuery.removeEventListener("change", update);
+    }
+    motionQuery.addListener(update);
+    return () => motionQuery.removeListener(update);
+  }, []);
+
+  const showVideo = !reducedMotion && !videoFailed;
+
+  const toggleVideo = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (videoPaused) {
+      try {
+        await video.play();
+        setVideoPaused(false);
+      } catch {
+        // ignore play errors
+      }
+      return;
+    }
+    video.pause();
+    setVideoPaused(true);
+  };
+
   return (
     <Section id="top" size="lg" className="relative">
       {/* Background video */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0">
-          <video
-            data-ambient-video="true"
-            aria-hidden
-            className="h-full w-full object-cover opacity-60 [mask-image:radial-gradient(70%_60%_at_50%_35%,black,transparent)]"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster={poster}
-          >
-            <source src="/media/hero-loop-mobile.mp4" type="video/mp4" media="(max-width: 768px)" />
-            <source src="/media/hero-loop.mp4" type="video/mp4" />
-          </video>
+          {showVideo ? (
+            <video
+              ref={videoRef}
+              data-ambient-video="true"
+              aria-hidden
+              className="h-full w-full object-cover opacity-60 [mask-image:radial-gradient(70%_60%_at_50%_35%,black,transparent)]"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster={poster}
+              onError={() => setVideoFailed(true)}
+              onPause={() => setVideoPaused(true)}
+              onPlay={() => setVideoPaused(false)}
+            >
+              <source src="/media/hero-loop-mobile.mp4" type="video/mp4" media="(max-width: 768px)" />
+              <source src="/media/hero-loop.mp4" type="video/mp4" />
+            </video>
+          ) : (
+            <picture aria-hidden className="absolute inset-0 -z-10 opacity-70">
+              <source srcSet="/media/hero-mobile.webp" media="(max-width: 768px)" />
+              <img src="/media/hero-poster.webp" alt="" className="h-full w-full object-cover" />
+            </picture>
+          )}
         </div>
-
-        {/* Fallback poster layer */}
-        <picture aria-hidden className="absolute inset-0 -z-10 opacity-70">
-          <source srcSet="/media/hero-mobile.webp" media="(max-width: 768px)" />
-          <img
-            src="/media/hero-poster.webp"
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        </picture>
 
         {/* Subtle grid + vignette */}
         <div
@@ -65,6 +100,18 @@ export default function Hero() {
           className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0)_55%,hsl(var(--bg))_100%)]"
         />
       </div>
+
+      {showVideo ? (
+        <button
+          type="button"
+          onClick={toggleVideo}
+          aria-pressed={videoPaused}
+          aria-label={videoPaused ? "Play background video" : "Pause background video"}
+          className="absolute right-4 top-4 z-10 rounded-full border border-border/70 bg-surface/60 px-3 py-1 text-xs text-muted backdrop-blur transition-colors hover:text-text"
+        >
+          {videoPaused ? "Play motion" : "Pause motion"}
+        </button>
+      ) : null}
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="relative">
         <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-3">

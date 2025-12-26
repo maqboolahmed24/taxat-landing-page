@@ -16,7 +16,7 @@ import StickyCTA from "@/components/marketing/StickyCTA";
 
 export default function Page() {
   return (
-    <main className="relative overflow-x-clip">
+    <main className="relative overflow-x-clip pb-24 md:pb-28">
       <CursorGlow />
       <ScrollProgress />
       <StickyCTA />

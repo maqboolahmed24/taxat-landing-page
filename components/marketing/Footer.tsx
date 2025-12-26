@@ -1,5 +1,6 @@
 import Section from "@/components/ui/Section";
 import GradientText from "@/components/ui/GradientText";
+import CurrentYear from "@/components/ui/CurrentYear";
 
 export default function Footer() {
   return (
@@ -64,7 +65,7 @@ export default function Footer() {
         <div className="mt-10 h-px w-full hairline" />
 
         <div className="mt-6 flex flex-col gap-2 text-xs text-muted md:flex-row md:items-center md:justify-between">
-          <div>© {new Date().getFullYear()} Taxat. All rights reserved.</div>
+          <div>© <CurrentYear /> Taxat. All rights reserved.</div>
         </div>
       </Section>
     </footer>

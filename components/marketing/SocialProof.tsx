@@ -30,7 +30,14 @@ export default function SocialProof() {
               key={l.alt}
               className="rounded-2xl border border-border/60 bg-surface/25 p-3 shadow-glow"
             >
-              <Image src={l.src} alt={l.alt} width={220} height={64} className="h-10 w-auto opacity-90" />
+              <Image
+                src={l.src}
+                alt={l.alt}
+                width={220}
+                height={64}
+                className="h-10 w-auto opacity-90"
+                sizes="(min-width: 768px) 120px, (min-width: 640px) 28vw, 44vw"
+              />
             </div>
           ))}
         </div>

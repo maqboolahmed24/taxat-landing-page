@@ -9,6 +9,7 @@ import { track } from "@/lib/analytics";
 import { AnimatePresence, motion } from "framer-motion";
 import { Play, ShieldCheck } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
 
 type Tab = {
   k: string;
@@ -47,19 +48,50 @@ const tabs: Tab[] = [
 export default function ProductShowcase() {
   const [active, setActive] = useState(tabs[0].k);
   const [playing, setPlaying] = useState(false);
+  const [open, setOpen] = useState(false);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const tab = useMemo(() => tabs.find((t) => t.k === active) ?? tabs[0], [active]);
+  const moveFocus = (nextIndex: number) => {
+    const next = tabs[nextIndex];
+    setActive(next.k);
+    requestAnimationFrame(() => tabRefs.current[nextIndex]?.focus());
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      event.preventDefault();
+      moveFocus((idx + 1) % tabs.length);
+      return;
+    }
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      event.preventDefault();
+      moveFocus((idx - 1 + tabs.length) % tabs.length);
+      return;
+    }
+    if (event.key === "Home") {
+      event.preventDefault();
+      moveFocus(0);
+      return;
+    }
+    if (event.key === "End") {
+      event.preventDefault();
+      moveFocus(tabs.length - 1);
+    }
+  };
 
   const onPlay = async () => {
     const v = videoRef.current;
     track("video_play", { id: "product_tour" });
+    setOpen(true);
     setPlaying(true);
     try {
       await v?.play();
     } catch {
       // ignore autoplay constraints
       setPlaying(false);
+      setOpen(false);
     }
   };
 
@@ -77,7 +109,7 @@ export default function ProductShowcase() {
           </p>
 
           <div className="mt-7 grid gap-2" role="tablist" aria-label="Product screens">
-            {tabs.map((t) => {
+            {tabs.map((t, idx) => {
               const is = t.k === active;
               const tabId = `product-tab-${t.k}`;
               const panelId = `product-panel-${t.k}`;
@@ -90,11 +122,15 @@ export default function ProductShowcase() {
                       ? "border-accent/40 bg-accent/10"
                       : "border-border/60 bg-surface/25 hover:bg-surface/40"
                   )}
+                  ref={(el) => {
+                    tabRefs.current[idx] = el;
+                  }}
                   id={tabId}
                   role="tab"
                   aria-selected={is}
                   aria-controls={panelId}
                   tabIndex={is ? 0 : -1}
+                  onKeyDown={(event) => onKeyDown(event, idx)}
                   onClick={() => {
                     setActive(t.k);
                     track("product_tab_select", { tab: t.k });
@@ -160,6 +196,7 @@ export default function ProductShowcase() {
                     height={1500}
                     className="rounded-none border border-border/60 shadow-glow"
                     priority={false}
+                    sizes="(min-width: 1024px) 58vw, 100vw"
                   />
 
                   <div className="rounded-2xl border border-border/60 bg-surface/30 p-4">
@@ -173,7 +210,7 @@ export default function ProductShowcase() {
               </AnimatePresence>
 
               {/* Video overlay: non-blocking, click-to-play */}
-              <div className={cn("mt-6 overflow-hidden rounded-none border border-border/60 bg-black/30", !playing && "hidden")}>
+              <div className={cn("mt-6 overflow-hidden rounded-none border border-border/60 bg-black/30", !open && "hidden")}>
                 <video
                   ref={videoRef}
                   controls
@@ -183,12 +220,21 @@ export default function ProductShowcase() {
                   muted
                   aria-label="Product tour video (muted)"
                   playsInline
+                  onPlay={() => {
+                    setOpen(true);
+                    setPlaying(true);
+                  }}
+                  onPause={() => {
+                    setPlaying(false);
+                  }}
                   onEnded={() => {
                     setPlaying(false);
+                    setOpen(false);
                     track("video_complete", { id: "product_tour" });
                   }}
                 >
                   <source src="/media/product-tour.mp4" type="video/mp4" />
+                  <track kind="captions" src="/media/product-tour.vtt" srcLang="en" label="English" default />
                 </video>
               </div>
             </div>

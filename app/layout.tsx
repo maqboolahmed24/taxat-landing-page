@@ -43,14 +43,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark">
       <body className={`${fontSans.variable} ${fontDisplay.variable} font-sans antialiased`}>
-        <div
-          aria-hidden
-          className="pointer-events-none fixed inset-0 -z-20"
-          style={{
-            background:
-              "radial-gradient(1200px circle at 20% -10%, hsl(var(--accent) / 0.16), transparent 55%), radial-gradient(1000px circle at 90% 10%, hsl(var(--accent-2) / 0.14), transparent 50%), radial-gradient(900px circle at 50% 120%, hsl(var(--accent-3) / 0.12), transparent 60%), hsl(var(--bg))",
-          }}
-        />
         <Providers>{children}</Providers>
       </body>
     </html>
