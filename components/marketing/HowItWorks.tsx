@@ -6,7 +6,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { track } from "@/lib/analytics";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
@@ -102,7 +102,12 @@ export default function HowItWorks() {
             scales with clients · without adding headcount.
           </p>
 
-          <div className="mt-7 grid gap-2" role="tablist" aria-label="How it works steps">
+          <div
+            className="mt-7 grid gap-2"
+            role="tablist"
+            aria-label="How it works steps"
+            aria-orientation="vertical"
+          >
             {steps.map((s, idx) => {
               const is = s.k === active;
               const tabId = `how-tab-${s.k}`;
@@ -162,49 +167,61 @@ export default function HowItWorks() {
             </div>
 
             <div className="p-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={step.k}
-                  initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-                  transition={{ duration: 0.35 }}
-                  className="grid gap-6 lg:grid-cols-12"
-                  role="tabpanel"
-                  id={`how-panel-${step.k}`}
-                  aria-labelledby={`how-tab-${step.k}`}
-                  tabIndex={0}
-                >
-                  <div className="lg:col-span-7">
-                    <Image
-                      src={step.image}
-                      alt={step.title}
-                      width={2400}
-                      height={1500}
-                      className="rounded-none border border-border/60 shadow-glow"
-                      sizes="(min-width: 1024px) 58vw, 100vw"
-                    />
-                  </div>
-                  <div className="lg:col-span-5">
-                    <div className="text-sm font-medium text-text">You get</div>
-                    <ul className="mt-3 grid gap-2 text-sm text-muted">
-                      {step.bullets.map((b) => (
-                        <li key={b} className="flex gap-2">
-                          <span className="mt-2 h-1 w-1 rounded-full bg-accent/80" />
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="mt-6 rounded-2xl border border-border/60 bg-surface/30 p-4">
-                      <div className="text-xs font-medium text-text">Clarity by design</div>
-                      <div className="mt-1 text-xs leading-relaxed text-muted">
-                        Confirmed and inferred links are clearly labelled so reviewers know what’s verified.
+              <div className="relative">
+                {steps.map((s) => {
+                  const isActive = s.k === active;
+                  return (
+                    <motion.div
+                      key={s.k}
+                      initial={false}
+                      animate={
+                        isActive
+                          ? { opacity: 1, y: 0, filter: "blur(0px)" }
+                          : { opacity: 0, y: 10, filter: "blur(8px)" }
+                      }
+                      transition={{ duration: 0.35 }}
+                      className={cn(
+                        "grid gap-6 lg:grid-cols-12",
+                        isActive ? "relative" : "pointer-events-none absolute inset-0"
+                      )}
+                      role="tabpanel"
+                      id={`how-panel-${s.k}`}
+                      aria-labelledby={`how-tab-${s.k}`}
+                      aria-hidden={!isActive}
+                      tabIndex={isActive ? 0 : -1}
+                    >
+                      <div className="lg:col-span-7">
+                        <Image
+                          src={s.image}
+                          alt={s.title}
+                          width={2400}
+                          height={1500}
+                          className="rounded-none border border-border/60 shadow-glow"
+                          sizes="(min-width: 1024px) 58vw, 100vw"
+                        />
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+                      <div className="lg:col-span-5">
+                        <div className="text-sm font-medium text-text">You get</div>
+                        <ul className="mt-3 grid gap-2 text-sm text-muted">
+                          {s.bullets.map((b) => (
+                            <li key={b} className="flex gap-2">
+                              <span className="mt-2 h-1 w-1 rounded-full bg-accent/80" />
+                              <span>{b}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <div className="mt-6 rounded-2xl border border-border/60 bg-surface/30 p-4">
+                          <div className="text-xs font-medium text-text">Clarity by design</div>
+                          <div className="mt-1 text-xs leading-relaxed text-muted">
+                            Confirmed and inferred links are clearly labelled so reviewers know what’s verified.
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

@@ -27,9 +27,19 @@ export default function ScrollProgress() {
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    window.addEventListener("load", update);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => update());
+      resizeObserver.observe(document.documentElement);
+      resizeObserver.observe(document.body);
+    }
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      window.removeEventListener("load", update);
+      resizeObserver?.disconnect();
       cancelAnimationFrame(raf);
     };
   }, []);

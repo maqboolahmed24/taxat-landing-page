@@ -9,6 +9,7 @@ import { ArrowRight, CalendarDays } from "lucide-react";
 
 export default function StickyCTA() {
   const [visible, setVisible] = useState(false);
+  const [suppressed, setSuppressed] = useState(false);
 
   useEffect(() => {
     let raf = 0;
@@ -32,12 +33,30 @@ export default function StickyCTA() {
     };
   }, []);
 
+  useEffect(() => {
+    const target = document.getElementById("beta");
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setSuppressed(entries[0]?.isIntersecting ?? false);
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  const show = visible && !suppressed;
+
   return (
     <div
       className={cn(
         "fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 transition-all duration-200 motion-reduce:transition-none",
-        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
+        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
       )}
+      aria-hidden={!show}
     >
       <div className="pointer-events-auto flex w-full max-w-xl items-center justify-between gap-3 rounded-2xl border border-border/60 bg-surface/70 px-4 py-3 shadow-glow backdrop-blur">
         <div className="hidden text-sm text-muted sm:block">Ready to see Taxat in action?</div>
@@ -48,6 +67,7 @@ export default function StickyCTA() {
             href={BOOK_DEMO_URL}
             newTab
             icon={<CalendarDays className="h-4 w-4" />}
+            tabIndex={show ? 0 : -1}
             onClick={() => track("cta_secondary_click", { location: "sticky" })}
           >
             Book demo
@@ -57,6 +77,7 @@ export default function StickyCTA() {
             size="sm"
             href="#beta"
             icon={<ArrowRight className="h-4 w-4" />}
+            tabIndex={show ? 0 : -1}
             onClick={() => track("cta_primary_click", { location: "sticky" })}
           >
             Request beta

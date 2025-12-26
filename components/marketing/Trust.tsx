@@ -56,7 +56,7 @@ export default function Trust() {
               aria-hidden
               width={2400}
               height={1350}
-              className="h-[2.92rem] w-full object-cover opacity-90 md:h-[3.65rem]"
+              className="h-40 w-full object-cover opacity-90 md:h-52 lg:h-60"
               sizes="(min-width: 1024px) 50vw, 100vw"
             />
             <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.65),transparent_55%)]" />

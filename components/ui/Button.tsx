@@ -60,18 +60,19 @@ export default function Button(props: ButtonProps | AnchorProps) {
   const cls = cn(base, sizes[size], intents[intent], className);
 
   if ("href" in props && typeof props.href === "string") {
-    const { href: _href, newTab, ...anchorProps } = rest as AnchorHTMLAttributes<HTMLAnchorElement> & {
+    const { href: _href, newTab, rel: relProp, ...anchorProps } = rest as AnchorHTMLAttributes<HTMLAnchorElement> & {
       href?: string;
       newTab?: boolean;
     };
     const isNewTab = props.newTab ?? newTab;
+    const rel = isNewTab ? ["noopener", "noreferrer", relProp].filter(Boolean).join(" ") : relProp;
 
     return (
       <a
         href={props.href}
         className={cls}
         target={isNewTab ? "_blank" : undefined}
-        rel={isNewTab ? "noreferrer" : undefined}
+        rel={rel}
         {...anchorProps}
       >
         <span className="relative">

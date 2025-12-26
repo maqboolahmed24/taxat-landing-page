@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { track } from "@/lib/analytics";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
@@ -48,23 +48,18 @@ export default function Accordion({
               />
             </button>
 
-            <AnimatePresence initial={false}>
-              {isOpen ? (
-                <motion.div
-                  key="content"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.28 }}
-                  className="overflow-hidden"
-                  role="region"
-                  id={panelId}
-                  aria-labelledby={buttonId}
-                >
-                  <div className="pt-3 text-sm leading-relaxed text-muted">{item.a}</div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            <motion.div
+              initial={false}
+              animate={isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+              transition={{ duration: 0.28 }}
+              className="overflow-hidden"
+              role="region"
+              id={panelId}
+              aria-labelledby={buttonId}
+              aria-hidden={!isOpen}
+            >
+              <div className="pt-3 text-sm leading-relaxed text-muted">{item.a}</div>
+            </motion.div>
           </div>
         );
       })}

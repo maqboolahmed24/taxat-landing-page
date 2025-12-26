@@ -138,24 +138,15 @@ export default function FinalCTA() {
                     className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden"
                     aria-hidden="true"
                   >
-                    <span>Company website</span>
-                    <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+                    <span>Preferred contact time</span>
+                    <input name="contact_time" type="text" tabIndex={-1} autoComplete="off" />
                   </label>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <div>
                       <div className="text-sm font-medium text-text">Beta request</div>
                       <div className="mt-1 text-sm text-muted">Short form · under a minute</div>
                     </div>
-                    <Button
-                      intent="primary"
-                      size="sm"
-                      icon={<ArrowRight className="h-4 w-4" />}
-                      disabled={state === "loading"}
-                      type="submit"
-                    >
-                      {state === "loading" ? "Sending…" : "Request beta"}
-                    </Button>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
@@ -241,6 +232,18 @@ export default function FinalCTA() {
                   <p className="text-xs leading-relaxed text-muted">
                     By submitting, you agree to be contacted about the beta. No spam. No HMRC affiliation implied.
                   </p>
+
+                  <div className="flex justify-end">
+                    <Button
+                      intent="primary"
+                      size="sm"
+                      icon={<ArrowRight className="h-4 w-4" />}
+                      disabled={state === "loading"}
+                      type="submit"
+                    >
+                      {state === "loading" ? "Sending…" : "Submit request"}
+                    </Button>
+                  </div>
                 </form>
               )}
             </Card>
@@ -263,8 +266,8 @@ export default function FinalCTA() {
                     className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden"
                     aria-hidden="true"
                   >
-                    <span>Company website</span>
-                    <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+                    <span>Preferred contact time</span>
+                    <input name="contact_time" type="text" tabIndex={-1} autoComplete="off" />
                   </label>
                   <label className="grid gap-2 text-sm sm:flex-1">
                     <span className="text-text/90">Work email</span>

@@ -6,9 +6,9 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { track } from "@/lib/analytics";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Play, ShieldCheck } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 
 type Tab = {
@@ -53,6 +53,18 @@ export default function ProductShowcase() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const tab = useMemo(() => tabs.find((t) => t.k === active) ?? tabs[0], [active]);
+  const startTour = useCallback(async () => {
+    const v = videoRef.current;
+    if (!v) return;
+    setOpen(true);
+    try {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await v.play();
+    } catch {
+      setPlaying(false);
+      setOpen(false);
+    }
+  }, []);
   const moveFocus = (nextIndex: number) => {
     const next = tabs[nextIndex];
     setActive(next.k);
@@ -81,19 +93,13 @@ export default function ProductShowcase() {
     }
   };
 
-  const onPlay = async () => {
-    const v = videoRef.current;
-    track("video_play", { id: "product_tour" });
-    setOpen(true);
-    setPlaying(true);
-    try {
-      await v?.play();
-    } catch {
-      // ignore autoplay constraints
-      setPlaying(false);
-      setOpen(false);
-    }
-  };
+  useEffect(() => {
+    const onStart = () => {
+      void startTour();
+    };
+    window.addEventListener("taxat:product-tour", onStart);
+    return () => window.removeEventListener("taxat:product-tour", onStart);
+  }, [startTour]);
 
   return (
     <Section id="demo" size="lg">
@@ -108,7 +114,12 @@ export default function ProductShowcase() {
             for explainability and governance · so your outputs are defensible, not “black box”.
           </p>
 
-          <div className="mt-7 grid gap-2" role="tablist" aria-label="Product screens">
+          <div
+            className="mt-7 grid gap-2"
+            role="tablist"
+            aria-label="Product screens"
+            aria-orientation="vertical"
+          >
             {tabs.map((t, idx) => {
               const is = t.k === active;
               const tabId = `product-tab-${t.k}`;
@@ -154,14 +165,7 @@ export default function ProductShowcase() {
               Watch a 60‑sec walkthrough of the core screens and workflow. Tap play when you’re ready.
             </p>
             <div className="mt-4">
-              <Button
-                intent="secondary"
-                icon={<Play className="h-4 w-4" />}
-                type="button"
-                onClick={() => {
-                  onPlay();
-                }}
-              >
+              <Button intent="secondary" icon={<Play className="h-4 w-4" />} type="button" onClick={startTour}>
                 {playing ? "Playing…" : "Play tour"}
               </Button>
             </div>
@@ -176,46 +180,82 @@ export default function ProductShowcase() {
             </div>
 
             <div className="p-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={tab.k}
-                  initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-                  transition={{ duration: 0.35 }}
-                  className="grid gap-6"
-                  role="tabpanel"
-                  id={`product-panel-${tab.k}`}
-                  aria-labelledby={`product-tab-${tab.k}`}
-                  tabIndex={0}
-                >
-                  <Image
-                    src={tab.image}
-                    alt={tab.label}
-                    width={2400}
-                    height={1500}
-                    className="rounded-none border border-border/60 shadow-glow"
-                    priority={false}
-                    sizes="(min-width: 1024px) 58vw, 100vw"
-                  />
+              <div className="relative">
+                {tabs.map((t) => {
+                  const isActive = t.k === active;
+                  return (
+                    <motion.div
+                      key={t.k}
+                      initial={false}
+                      animate={
+                        isActive
+                          ? { opacity: 1, y: 0, filter: "blur(0px)" }
+                          : { opacity: 0, y: 10, filter: "blur(8px)" }
+                      }
+                      transition={{ duration: 0.35 }}
+                      className={cn(
+                        "grid gap-6",
+                        isActive ? "relative" : "pointer-events-none absolute inset-0"
+                      )}
+                      role="tabpanel"
+                      id={`product-panel-${t.k}`}
+                      aria-labelledby={`product-tab-${t.k}`}
+                      aria-hidden={!isActive}
+                      tabIndex={isActive ? 0 : -1}
+                    >
+                      <Image
+                        src={t.image}
+                        alt={t.label}
+                        width={2400}
+                        height={1500}
+                        className="rounded-none border border-border/60 shadow-glow"
+                        priority={false}
+                        sizes="(min-width: 1024px) 58vw, 100vw"
+                      />
 
-                  <div className="rounded-2xl border border-border/60 bg-surface/30 p-4">
-                    <div className="text-xs font-medium text-text">Governance snapshot</div>
-                    <p className="mt-1 text-xs leading-relaxed text-muted">
-                      Every run can generate a manifest (data completeness, rules version, and explainable paths). This is
-                      how the same figure can be defended months later · without relying on memory.
-                    </p>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+                      <div className="rounded-2xl border border-border/60 bg-surface/30 p-4">
+                        <div className="text-xs font-medium text-text">Governance snapshot</div>
+                        <p className="mt-1 text-xs leading-relaxed text-muted">
+                          Every run can generate a manifest (data completeness, rules version, and explainable paths). This
+                          is how the same figure can be defended months later · without relying on memory.
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
 
               {/* Video overlay: non-blocking, click-to-play */}
-              <div className={cn("mt-6 overflow-hidden rounded-none border border-border/60 bg-black/30", !open && "hidden")}>
+              <div
+                className={cn(
+                  "mt-6 overflow-hidden rounded-none border border-border/60 bg-black/30",
+                  !open && "hidden"
+                )}
+              >
+                <div className="flex items-center justify-between border-b border-border/60 bg-surface/40 px-4 py-2">
+                  <div className="text-xs font-medium text-text">Product tour</div>
+                  <button
+                    type="button"
+                    className="text-xs text-muted hover:text-text"
+                    onClick={() => {
+                      const v = videoRef.current;
+                      if (v) {
+                        v.pause();
+                        v.currentTime = 0;
+                      }
+                      setPlaying(false);
+                      setOpen(false);
+                    }}
+                    aria-label="Close product tour"
+                  >
+                    Close
+                  </button>
+                </div>
                 <video
                   ref={videoRef}
                   controls
                   preload="none"
-                  poster="/media/hero-poster.webp"
+                  poster="/media/ui/mission-control.jpg"
                   className="h-full w-full"
                   muted
                   aria-label="Product tour video (muted)"
@@ -223,6 +263,7 @@ export default function ProductShowcase() {
                   onPlay={() => {
                     setOpen(true);
                     setPlaying(true);
+                    track("video_play", { id: "product_tour" });
                   }}
                   onPause={() => {
                     setPlaying(false);
@@ -233,6 +274,7 @@ export default function ProductShowcase() {
                     track("video_complete", { id: "product_tour" });
                   }}
                 >
+                  <source src="/media/product-tour.webm" type="video/webm" />
                   <source src="/media/product-tour.mp4" type="video/mp4" />
                   <track kind="captions" src="/media/product-tour.vtt" srcLang="en" label="English" default />
                 </video>

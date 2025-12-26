@@ -45,7 +45,7 @@ export default function Problem() {
           </p>
         </div>
 
-        <div className="md:col-span-6 md:mt-[19.55rem]">
+        <div className="md:col-span-6 md:mt-12 lg:mt-24">
           <div className="noise relative overflow-hidden rounded-3xl border border-border/60 bg-surface/30 shadow-glow">
             <Image
               src="/media/still-1.webp"

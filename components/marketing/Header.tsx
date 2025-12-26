@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { track } from "@/lib/analytics";
 import { Menu, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const navItems = [
   { id: "product", label: "Product" },
@@ -16,6 +16,11 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string>("");
   const mobileMenuId = "mobile-menu";
+  const menuRef = useRef<HTMLElement | null>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const intersectionState = useRef(
+    new Map<string, { id: string; isIntersecting: boolean; intersectionRatio: number }>()
+  );
 
   const ids = useMemo(() => navItems.map((n) => n.id), []);
 
@@ -26,13 +31,25 @@ export default function Header() {
 
     if (!els.length) return;
 
+    intersectionState.current.clear();
+    els.forEach((el) => {
+      intersectionState.current.set(el.id, { id: el.id, isIntersecting: false, intersectionRatio: 0 });
+    });
+
     const io = new IntersectionObserver(
       (entries) => {
-        // pick most visible
-        const visible = entries
+        entries.forEach((entry) => {
+          intersectionState.current.set(entry.target.id, {
+            id: entry.target.id,
+            isIntersecting: entry.isIntersecting,
+            intersectionRatio: entry.intersectionRatio ?? 0,
+          });
+        });
+
+        const visible = Array.from(intersectionState.current.values())
           .filter((e) => e.isIntersecting)
-          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0];
-        if (visible?.target?.id) setActive(visible.target.id);
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        setActive(visible?.id ?? "");
       },
       {
         root: null,
@@ -46,21 +63,83 @@ export default function Header() {
   }, [ids]);
 
   useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = () => setOpen(false);
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    const legacy = mq as MediaQueryList & {
+      addListener?: (cb: () => void) => void;
+      removeListener?: (cb: () => void) => void;
+    };
+    legacy.addListener?.(onChange);
+    return () => legacy.removeListener?.(onChange);
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const getFocusable = () => {
+      if (!menuRef.current) return [] as HTMLElement[];
+      const items = Array.from(
+        menuRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      return toggleRef.current ? [...items, toggleRef.current] : items;
+    };
+
+    const focusables = getFocusable();
+    focusables[0]?.focus();
+
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const items = getFocusable();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+
+      if (event.shiftKey) {
+        if (document.activeElement === first || !menuRef.current?.contains(document.activeElement)) {
+          event.preventDefault();
+          last.focus();
+        }
+        return;
+      }
+
+      if (document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
+
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+      toggleRef.current?.focus();
+    };
   }, [open]);
 
   return (
     <header className="sticky top-0 z-40">
       <div className="glass border-b border-border/60">
         <div className="flex w-full items-center justify-between px-3 py-3 md:px-6">
-          <a href="#top" className="flex items-center gap-3" aria-label="Taxat home">
+          <a
+            href="#top"
+            className="flex items-center gap-3"
+            aria-label="Taxat home"
+            onClick={() => setOpen(false)}
+          >
             <div className="grid h-9 w-9 place-items-center">
               <img src="/favicon.svg" alt="Taxat logo" width={36} height={36} className="h-9 w-9" />
             </div>
@@ -95,6 +174,7 @@ export default function Header() {
           </nav>
 
           <button
+            ref={toggleRef}
             className="glow-border grid h-11 w-11 place-items-center rounded-xl border border-border/70 bg-surface/50 text-text md:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
@@ -110,6 +190,7 @@ export default function Header() {
           id={mobileMenuId}
           aria-label="Primary"
           className={cn("md:hidden", open ? "block" : "hidden")}
+          ref={menuRef}
         >
           <div className="mx-auto max-w-6xl px-6 pb-4">
             <div className="rounded-2xl border border-border/70 bg-surface/40 p-4">

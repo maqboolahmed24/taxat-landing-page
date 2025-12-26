@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { createHash } from "crypto";
+import { randomUUID } from "crypto";
 import { isIP } from "net";
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/lib/site";
@@ -15,6 +15,7 @@ type WaitlistPayload = {
   notes?: string;
   intent?: string;
   website?: string;
+  contact_time?: string;
 };
 
 type RateLimitEntry = {
@@ -24,7 +25,18 @@ type RateLimitEntry = {
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
-const rateLimit = new Map<string, RateLimitEntry>();
+const CLIENT_ID_COOKIE = "taxat_client_id";
+const CLIENT_ID_TTL_DAYS = 365;
+
+declare global {
+  // eslint-disable-next-line no-var
+  var taxatRateLimit: Map<string, RateLimitEntry> | undefined;
+}
+
+const rateLimit = globalThis.taxatRateLimit ?? new Map<string, RateLimitEntry>();
+if (!globalThis.taxatRateLimit) {
+  globalThis.taxatRateLimit = rateLimit;
+}
 let cachedTransporter: nodemailer.Transporter | null = null;
 let cachedTransportKey = "";
 
@@ -61,7 +73,7 @@ function isAllowedOrigin(req: Request) {
   const originHost = safeHost(req.headers.get("origin"));
   const refererHost = safeHost(req.headers.get("referer"));
   const host = originHost ?? refererHost;
-  if (!host) return true;
+  if (!host) return process.env.NODE_ENV !== "production";
   if (host === allowedHost || host === bareHost || host === `www.${bareHost}`) return true;
   if (process.env.NODE_ENV !== "production" && (host.startsWith("localhost") || host.startsWith("127.0.0.1"))) {
     return true;
@@ -70,7 +82,7 @@ function isAllowedOrigin(req: Request) {
 }
 
 function getClientIp(req: Request) {
-  const trustProxy = process.env.TRUST_PROXY === "true";
+  const trustProxy = process.env.TRUST_PROXY !== "false";
   if (trustProxy) {
     const forwarded = req.headers.get("x-forwarded-for");
     if (forwarded) {
@@ -78,19 +90,40 @@ function getClientIp(req: Request) {
       if (isIP(ip)) return ip;
     }
   }
-  const direct = req.headers.get("x-real-ip") ?? req.headers.get("cf-connecting-ip");
+  const direct =
+    req.headers.get("x-real-ip") ?? req.headers.get("cf-connecting-ip") ?? req.headers.get("true-client-ip");
   if (direct && isIP(direct)) return direct;
   return null;
 }
 
-function getRateLimitKey(req: Request) {
+function getCookieValue(header: string, name: string) {
+  const match = header.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return null;
+  }
+}
+
+function getClientId(req: Request) {
+  const cookieHeader = req.headers.get("cookie") ?? "";
+  const existing = getCookieValue(cookieHeader, CLIENT_ID_COOKIE);
+  if (existing) return { id: existing };
+
+  const id = randomUUID();
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  const cookie = `${CLIENT_ID_COOKIE}=${encodeURIComponent(id)}; Path=/; Max-Age=${
+    CLIENT_ID_TTL_DAYS * 24 * 60 * 60
+  }; SameSite=Lax; HttpOnly${secure}`;
+
+  return { id, setCookie: cookie };
+}
+
+function getRateLimitKey(req: Request, clientId: string) {
   const ip = getClientIp(req);
   if (ip) return `ip:${ip}`;
-  const ua = req.headers.get("user-agent") ?? "unknown";
-  const lang = req.headers.get("accept-language") ?? "unknown";
-  const origin = req.headers.get("origin") ?? req.headers.get("referer") ?? "unknown";
-  const hash = createHash("sha256").update(`${ua}|${lang}|${origin}`).digest("hex").slice(0, 32);
-  return `fp:${hash}`;
+  return `cid:${clientId}`;
 }
 
 function cleanupRateLimit(now: number) {
@@ -101,7 +134,7 @@ function cleanupRateLimit(now: number) {
   }
 }
 
-function isRateLimited(key: string) {
+function isRateLimitedMemory(key: string) {
   const now = Date.now();
   cleanupRateLimit(now);
   const entry = rateLimit.get(key);
@@ -112,6 +145,49 @@ function isRateLimited(key: string) {
   if (entry.count >= RATE_LIMIT_MAX) return true;
   entry.count += 1;
   return false;
+}
+
+async function isRateLimitedUpstash(key: string) {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+
+  const base = url.replace(/\/$/, "");
+  const encodedKey = encodeURIComponent(key);
+  try {
+    const headers = { Authorization: `Bearer ${token}` };
+    const incrRes = await fetch(`${base}/incr/${encodedKey}`, { method: "POST", headers, cache: "no-store" });
+    if (!incrRes.ok) {
+      throw new Error(`Upstash rate limit failed: ${incrRes.status}`);
+    }
+    const incrData = (await incrRes.json()) as { result?: number };
+    const count = Number(incrData.result ?? 0);
+    if (!Number.isFinite(count)) throw new Error("Invalid rate limit response");
+
+    if (count === 1) {
+      await fetch(`${base}/pexpire/${encodedKey}/${RATE_LIMIT_WINDOW_MS}`, {
+        method: "POST",
+        headers,
+        cache: "no-store",
+      });
+    }
+    return count > RATE_LIMIT_MAX;
+  } catch (err) {
+    console.error("Upstash rate limit error", err);
+    return null;
+  }
+}
+
+async function isRateLimited(key: string) {
+  const upstash = await isRateLimitedUpstash(key);
+  if (typeof upstash === "boolean") return upstash;
+  return isRateLimitedMemory(key);
+}
+
+function jsonResponse(body: Record<string, unknown>, init: ResponseInit, setCookie?: string) {
+  const res = NextResponse.json(body, init);
+  if (setCookie) res.headers.append("Set-Cookie", setCookie);
+  return res;
 }
 
 function getTransporter() {
@@ -149,11 +225,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
+  const { id: clientId, setCookie } = getClientId(req);
+
   let body: WaitlistPayload;
   try {
     body = (await req.json()) as WaitlistPayload;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
+    return jsonResponse({ ok: false, error: "Invalid request" }, { status: 400 }, setCookie);
   }
 
   const intent = normalize(body.intent) === "updates" ? "updates" : "beta";
@@ -164,28 +242,29 @@ export async function POST(req: Request) {
   const stack = normalize(body.stack);
   const notes = normalize(body.notes);
   const website = normalize(body.website);
+  const contactTime = normalize(body.contact_time);
 
-  if (website) {
-    return NextResponse.json({ ok: true });
+  if (website || contactTime) {
+    return jsonResponse({ ok: true }, { status: 200 }, setCookie);
   }
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailPattern.test(email)) {
-    return NextResponse.json({ ok: false, error: "Valid email required" }, { status: 400 });
+    return jsonResponse({ ok: false, error: "Valid email required" }, { status: 400 }, setCookie);
   }
 
   if (intent === "beta") {
     if (!name) {
-      return NextResponse.json({ ok: false, error: "Name required" }, { status: 400 });
+      return jsonResponse({ ok: false, error: "Name required" }, { status: 400 }, setCookie);
     }
     if (!firmSize || !saVolume) {
-      return NextResponse.json({ ok: false, error: "Firm size and SA volume required" }, { status: 400 });
+      return jsonResponse({ ok: false, error: "Firm size and SA volume required" }, { status: 400 }, setCookie);
     }
   }
 
-  const rateKey = getRateLimitKey(req);
-  if (isRateLimited(rateKey)) {
-    return NextResponse.json({ ok: false, error: "Too many requests. Try again shortly." }, { status: 429 });
+  const rateKey = getRateLimitKey(req, clientId);
+  if (await isRateLimited(rateKey)) {
+    return jsonResponse({ ok: false, error: "Too many requests. Try again shortly." }, { status: 429 }, setCookie);
   }
 
   const ip = getClientIp(req) ?? "unknown";
@@ -200,7 +279,7 @@ export async function POST(req: Request) {
     ({ transporter, smtpUser, from } = getTransporter());
   } catch (err) {
     console.error("Waitlist SMTP config error", err);
-    return NextResponse.json({ ok: false, error: "Service unavailable" }, { status: 503 });
+    return jsonResponse({ ok: false, error: "Service unavailable" }, { status: 503 }, setCookie);
   }
 
   const adminText = [
@@ -229,7 +308,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("Waitlist admin email failed", err);
-    return NextResponse.json({ ok: false, error: "Service unavailable" }, { status: 503 });
+    return jsonResponse({ ok: false, error: "Service unavailable" }, { status: 503 }, setCookie);
   }
 
   const recipientName = name || "there";
@@ -258,7 +337,7 @@ export async function POST(req: Request) {
     console.error("Waitlist user email failed", err);
   }
 
-  return NextResponse.json({ ok: true });
+  return jsonResponse({ ok: true }, { status: 200 }, setCookie);
 }
 
 export function GET() {

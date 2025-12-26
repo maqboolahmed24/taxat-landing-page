@@ -15,7 +15,7 @@ export default function Hero() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
-  const [videoPaused, setVideoPaused] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -93,6 +93,7 @@ export default function Hero() {
               onPause={() => setVideoPaused(true)}
               onPlay={() => setVideoPaused(false)}
             >
+              <source src="/media/hero-loop.webm" type="video/webm" />
               <source src="/media/hero-loop.mp4" type="video/mp4" />
             </video>
           ) : (
@@ -163,7 +164,10 @@ export default function Hero() {
             size="lg"
             href="#demo"
             icon={<Play className="h-4 w-4" />}
-            onClick={() => track("cta_secondary_click", { location: "hero" })}
+            onClick={() => {
+              track("cta_secondary_click", { location: "hero" });
+              window.dispatchEvent(new CustomEvent("taxat:product-tour"));
+            }}
           >
             Watch the product tour
           </Button>
