@@ -27,17 +27,41 @@ function safeHost(value: string | null) {
   }
 }
 
+function normalizeHost(value: string | null) {
+  if (!value) return null;
+  const host = value.trim().toLowerCase();
+  if (!host) return null;
+  return host.split(":")[0]?.trim() ?? null;
+}
+
+function stripWww(host: string) {
+  return host.replace(/^www\./, "");
+}
+
 function isAllowedOrigin(req: Request) {
-  const allowedHost = new URL(SITE_URL).host;
-  const bareHost = allowedHost.replace(/^www\./, "");
-  const originHost = safeHost(req.headers.get("origin"));
-  const refererHost = safeHost(req.headers.get("referer"));
-  const host = originHost ?? refererHost;
-  if (!host) return process.env.NODE_ENV !== "production";
-  if (host === allowedHost || host === bareHost || host === `www.${bareHost}`) return true;
-  if (process.env.NODE_ENV !== "production" && (host.startsWith("localhost") || host.startsWith("127.0.0.1"))) {
+  const allowedHost = normalizeHost(safeHost(SITE_URL));
+  const originHost = normalizeHost(safeHost(req.headers.get("origin")));
+  const refererHost = normalizeHost(safeHost(req.headers.get("referer")));
+  const requestHost = normalizeHost(req.headers.get("host"));
+  const vercelHost = normalizeHost(process.env.VERCEL_URL ?? null);
+  const candidate = originHost ?? refererHost;
+
+  if (!candidate) return process.env.NODE_ENV !== "production";
+
+  const normalizedCandidate = stripWww(candidate);
+  const allowedHosts = [allowedHost, requestHost, vercelHost]
+    .filter(Boolean)
+    .map((host) => stripWww(host as string));
+
+  if (allowedHosts.includes(normalizedCandidate)) return true;
+
+  if (
+    process.env.NODE_ENV !== "production" &&
+    (candidate.startsWith("localhost") || candidate.startsWith("127.0.0.1"))
+  ) {
     return true;
   }
+
   return false;
 }
 

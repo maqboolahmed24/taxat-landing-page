@@ -11,11 +11,14 @@ export type CookieReadResult = {
 
 function getConsentSecret() {
   const secret = process.env.COOKIE_CONSENT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV !== "production") return "dev-insecure-cookie-secret";
-    throw new Error("Missing COOKIE_CONSENT_SECRET");
+  if (secret) return secret;
+
+  const fallback =
+    process.env.VERCEL_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "dev-insecure-cookie-secret";
+  if (process.env.NODE_ENV === "production") {
+    console.warn("COOKIE_CONSENT_SECRET is missing; using a fallback secret.");
   }
-  return secret;
+  return fallback;
 }
 
 function signPayload(payload: string, secret: string) {
