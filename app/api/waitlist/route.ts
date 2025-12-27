@@ -101,7 +101,7 @@ function getClientIp(req: Request) {
   return null;
 }
 
-function isValidClientId(value: string | null) {
+function isValidClientId(value: string | null): value is string {
   if (!value) return false;
   if (value.length > CLIENT_ID_MAX_LENGTH) return false;
   return CLIENT_ID_PATTERN.test(value);

@@ -30,7 +30,9 @@ export function parseBoolean(input: unknown) {
   return false;
 }
 
-export function normalizeCookiePrefs(input: Partial<CookiePreferences>) {
+export function normalizeCookiePrefs(
+  input: Partial<Record<keyof CookiePreferences, unknown>>,
+) {
   const updatedAt =
     typeof input.updatedAt === "string" && !Number.isNaN(Date.parse(input.updatedAt))
       ? input.updatedAt
