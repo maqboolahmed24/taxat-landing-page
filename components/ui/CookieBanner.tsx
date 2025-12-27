@@ -36,34 +36,43 @@ type ToggleProps = {
 };
 
 function ToggleRow({ id, title, description, checked, disabled, onChange, hint }: ToggleProps) {
+  const hintId = hint ? `${id}-hint` : undefined;
+
   return (
     <label className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-surface/40 p-4 md:flex-row md:items-center md:justify-between">
       <div className="space-y-1">
         <div className="text-sm font-medium text-text">{title}</div>
         <p className="text-xs leading-relaxed text-muted">{description}</p>
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          id={id}
-          type="checkbox"
-          role="switch"
-          className="peer sr-only"
-          checked={checked}
-          disabled={disabled}
-          onChange={(event) => onChange?.(event.target.checked)}
-        />
-        <span
-          aria-hidden="true"
-          className={cn(
-            "relative h-5 w-9 rounded-full border border-border/70 bg-surface/60 transition-colors",
-            "peer-checked:border-accent/60 peer-checked:bg-accent/70",
-            "peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40",
-            "after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow",
-            "after:content-[''] after:transition-transform peer-checked:after:translate-x-4",
-            disabled && "opacity-60"
-          )}
-        />
-        {hint ? <span className="text-xs text-muted">{hint}</span> : null}
+      <div className={cn("flex items-center gap-2", hint && "flex-col items-end gap-1")}>
+        <div className="flex items-center gap-2">
+          <input
+            id={id}
+            type="checkbox"
+            role="switch"
+            aria-describedby={hintId}
+            className="peer sr-only"
+            checked={checked}
+            disabled={disabled}
+            onChange={(event) => onChange?.(event.target.checked)}
+          />
+          <span
+            aria-hidden="true"
+            className={cn(
+              "relative h-5 w-9 rounded-full border border-border/70 bg-surface/60 transition-colors",
+              "peer-checked:border-accent/60 peer-checked:bg-accent/70",
+              "peer-focus-visible:ring-2 peer-focus-visible:ring-accent/40",
+              "after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow",
+              "after:content-[''] after:transition-transform peer-checked:after:translate-x-4",
+              disabled && "opacity-60"
+            )}
+          />
+        </div>
+        {hint ? (
+          <span id={hintId} className="text-[11px] leading-none text-muted whitespace-nowrap">
+            {hint}
+          </span>
+        ) : null}
       </div>
     </label>
   );
